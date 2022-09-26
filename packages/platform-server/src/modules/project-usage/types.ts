@@ -14,19 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Module } from '@nestjs/common'
+import { Field, InputType, IntersectionType, ObjectType, OmitType, PartialType, PickType } from '@nestjs/graphql'
 
-import { ProjectUsageModule } from '../project-usage'
-import { SnapshotReportModule } from '../snapshot/snapshot-report'
+import { ProjectJobUsage, ProjectStorageUsage } from '@perfsee/platform-server/db'
 
-import { SourceController } from './controller'
-import { ProjectSourceIssueResolver, SourceIssueResolver } from './resolver'
-import { SourceService } from './service'
-
-@Module({
-  imports: [SnapshotReportModule, ProjectUsageModule],
-  controllers: [SourceController],
-  providers: [SourceIssueResolver, ProjectSourceIssueResolver, SourceService],
-  exports: [SourceService],
-})
-export class SourceModule {}
+@ObjectType()
+export class ProjectUsage extends IntersectionType(
+  PickType(ProjectJobUsage, ['jobCount', 'jobDuration']),
+  PickType(ProjectStorageUsage, ['storageSize']),
+) {}

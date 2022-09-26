@@ -51,6 +51,9 @@ type Artifact {
   """artifact updated timestamp"""
   updatedAt: DateTime!
 
+  """files uploaded to storage in this artifact"""
+  uploadSize: Int!
+
   """baseline artifact"""
   baseline: Artifact
 
@@ -108,6 +111,24 @@ type ArtifactEntrypoint {
   """artifact created timestamp"""
   createdAt: DateTime!
   artifactId: Int!
+}
+
+type ProjectUsagePack {
+  """total storage used size"""
+  name: String!
+
+  """total storage used size"""
+  isPublic: Boolean!
+
+  """job count limit within one month"""
+  jobCountMonthly: Int!
+
+  """job cost duration time limit within one month"""
+  jobTimeMonthly: Int!
+
+  """total storage used size"""
+  storageSize: Int!
+  createdAt: DateTime!
 }
 
 type Project {
@@ -196,6 +217,12 @@ type Project {
 
   """time usage information of project"""
   timeUsage(input: TimeUsageInput!): TimeUsage!
+
+  """project usage"""
+  usage: ProjectUsage!
+
+  """project usage pack"""
+  usagePack: ProjectUsagePack!
 
   """get project settings"""
   setting: Setting!
@@ -399,6 +426,9 @@ type SnapshotReport {
 
   """only exists in dynamic host jobs"""
   host: String
+
+  """files uploaded to storage in this artifact"""
+  uploadSize: Int!
 
   """the environment this report used"""
   environment: Environment!
@@ -850,6 +880,17 @@ type PaginatedProjects {
 type ProjectIdVerificationResult {
   ok: Boolean!
   error: String
+}
+
+type ProjectUsage {
+  """job count limit within one month"""
+  jobCount: Int!
+
+  """job cost duration time limit within one month, unit: millisecond"""
+  jobDuration: Int!
+
+  """total storage used size"""
+  storageSize: Int!
 }
 
 type Zone {

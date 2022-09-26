@@ -24,13 +24,23 @@ import { CheckSuiteModule } from '../checksuite'
 import { JobModule } from '../job'
 import { NotificationModule } from '../notification'
 import { ProjectModule } from '../project'
+import { ProjectUsageModule } from '../project-usage'
 
 import { ArtifactController } from './controller'
 import { ArtifactResolver, ProjectArtifactResolver, ArtifactEntrypointResolver } from './resolver'
 import { ArtifactService } from './service'
 
 @Module({
-  imports: [DBModule, StorageModule, AppVersionModule, ProjectModule, JobModule, CheckSuiteModule, NotificationModule],
+  imports: [
+    DBModule,
+    StorageModule,
+    AppVersionModule,
+    ProjectModule,
+    JobModule,
+    CheckSuiteModule,
+    NotificationModule,
+    ProjectUsageModule,
+  ],
   controllers: [ArtifactController],
   providers: [ArtifactService, ArtifactResolver, ProjectArtifactResolver, ArtifactEntrypointResolver],
   exports: [ArtifactService],

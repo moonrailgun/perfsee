@@ -20,12 +20,13 @@ import { EnvironmentModule } from '../../environment'
 import { PageModule } from '../../page'
 import { ProfileModule } from '../../profile'
 import { ProjectModule } from '../../project'
+import { ProjectUsageModule } from '../../project-usage'
 
 import { ProjectReportResolver, ReportResolver, SnapshotReportResolver } from './resolver'
 import { SnapshotReportService } from './service'
 
 @Module({
-  imports: [ProjectModule, EnvironmentModule, PageModule, ProfileModule],
+  imports: [ProjectModule, EnvironmentModule, PageModule, ProfileModule, ProjectUsageModule],
   providers: [SnapshotReportService, ReportResolver, SnapshotReportResolver, ProjectReportResolver],
   exports: [SnapshotReportService],
 })

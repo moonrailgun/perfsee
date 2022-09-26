@@ -120,6 +120,10 @@ export class Artifact extends BaseEntity {
   @UpdateDateColumn({ type: 'timestamp' })
   updatedAt!: Date
 
+  @Field(() => Int, { description: 'files uploaded to storage in this artifact' })
+  @Column({ default: 0 })
+  uploadSize!: number
+
   inProgress() {
     return this.status === BundleJobStatus.Pending || this.status === BundleJobStatus.Running
   }

@@ -16,17 +16,16 @@ limitations under the License.
 
 import { Module } from '@nestjs/common'
 
-import { ProjectUsageModule } from '../project-usage'
-import { SnapshotReportModule } from '../snapshot/snapshot-report'
+import { DBModule } from '@perfsee/platform-server/db'
 
-import { SourceController } from './controller'
-import { ProjectSourceIssueResolver, SourceIssueResolver } from './resolver'
-import { SourceService } from './service'
+import { ProjectModule } from '../project'
+
+import { ProjectProjectUsageResolver, ProjectUsageResolver } from './resolver'
+import { ProjectUsageService } from './service'
 
 @Module({
-  imports: [SnapshotReportModule, ProjectUsageModule],
-  controllers: [SourceController],
-  providers: [SourceIssueResolver, ProjectSourceIssueResolver, SourceService],
-  exports: [SourceService],
+  imports: [ProjectModule, DBModule],
+  providers: [ProjectProjectUsageResolver, ProjectUsageResolver, ProjectUsageService],
+  exports: [ProjectUsageService],
 })
-export class SourceModule {}
+export class ProjectUsageModule {}

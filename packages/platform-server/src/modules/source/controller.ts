@@ -37,4 +37,9 @@ export class SourceController {
       await this.service.saveSourceIssues(projectId, hash, item.reportId, item.diagnostics)
     }
   }
+
+  @OnEvent(`${JobType.SourceAnalyze}.upload`)
+  async handleSourceUploadSize(snapshotReprotId: number, uploadSize: number) {
+    await this.service.handleJobUpload(snapshotReprotId, uploadSize)
+  }
 }

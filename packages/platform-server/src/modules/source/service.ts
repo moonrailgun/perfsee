@@ -25,6 +25,7 @@ import { Logger } from '@perfsee/platform-server/logger'
 import { JobType, SnapshotStatus, SourceAnalyzeJob } from '@perfsee/server-common'
 import { FlameChartDiagnostic } from '@perfsee/shared'
 
+import { ProjectUsageService } from '../project-usage/service'
 import { SnapshotReportService } from '../snapshot/snapshot-report/service'
 
 @Injectable()
@@ -34,6 +35,7 @@ export class SourceService implements OnApplicationBootstrap {
     private readonly logger: Logger,
     private readonly internalIdService: InternalIdService,
     private readonly event: EventEmitter,
+    private readonly projectUsage: ProjectUsageService,
   ) {}
 
   onApplicationBootstrap() {
@@ -69,16 +71,20 @@ export class SourceService implements OnApplicationBootstrap {
 
   async startSourceIssueAnalyze(snapshotOrId: number | Snapshot) {
     const snapshot = typeof snapshotOrId === 'number' ? await Snapshot.findOneBy({ id: snapshotOrId }) : snapshotOrId
-    if (snapshot?.hash) {
-      this.logger.verbose('Emit source code analyse', { snapshotId: snapshot.id })
-      await this.event.emitAsync('job.create', {
-        type: JobType.SourceAnalyze,
-        payload: {
-          entityId: snapshot.id,
-          projectId: snapshot.projectId,
-        },
-      })
+    if (!snapshot?.hash) {
+      return
     }
+
+    await this.projectUsage.verifyUsageLimit(snapshot.projectId)
+
+    this.logger.verbose('Emit source code analyse', { snapshotId: snapshot.id })
+    await this.event.emitAsync('job.create', {
+      type: JobType.SourceAnalyze,
+      payload: {
+        entityId: snapshot.id,
+        projectId: snapshot.projectId,
+      },
+    })
   }
 
   async getSourceJobPayload(snapshotId: number): Promise<SourceAnalyzeJob | null> {
@@ -165,5 +171,9 @@ export class SourceService implements OnApplicationBootstrap {
       .where('iid = :iid', { iid: issueIid })
       .andWhere('project_id = :projectId', { projectId })
       .getOne()
+  }
+
+  async handleJobUpload(reportId: number, uploadSize: number) {
+    await this.reportService.handleReportUploadSize(reportId, uploadSize)
   }
 }

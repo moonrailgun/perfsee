@@ -42,6 +42,7 @@ import { AppVersionService } from '../app-version/service'
 import { CheckSuiteService } from '../checksuite/service'
 import { NotificationService } from '../notification/service'
 import { PageService } from '../page/service'
+import { ProjectUsageService } from '../project-usage/service'
 import { SourceService } from '../source/service'
 
 import { SnapshotReportService } from './snapshot-report/service'
@@ -65,6 +66,7 @@ export class SnapshotService implements OnApplicationBootstrap {
     private readonly checkSuite: CheckSuiteService,
     private readonly notification: NotificationService,
     private readonly appVersion: AppVersionService,
+    private readonly projectUsage: ProjectUsageService,
   ) {}
 
   onApplicationBootstrap() {
@@ -125,6 +127,8 @@ export class SnapshotService implements OnApplicationBootstrap {
     envIid: number,
     title?: string,
   ) {
+    await this.projectUsage.verifyUsageLimit(projectId)
+
     const existed = await Page.findOneBy({ url, projectId })
 
     const page = await Page.create({
@@ -184,6 +188,8 @@ export class SnapshotService implements OnApplicationBootstrap {
   ) {
     const { projectId, pageIids, issuer, profileIids, envIids, title, trigger, hash } = options
     const project = await Project.findOneByOrFail({ id: projectId })
+
+    await this.projectUsage.verifyUsageLimit(projectId)
 
     const { pages, envs, profiles, propertyIds } = await this.pageService.getPageWithProperty(
       projectId,

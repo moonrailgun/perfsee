@@ -27,6 +27,7 @@ import { BundleJobPayload, BundleJobUpdate, BundleJobStatus, JobType } from '@pe
 
 import { CheckSuiteService } from '../checksuite/service'
 import { NotificationService } from '../notification/service'
+import { ProjectUsageService } from '../project-usage/service'
 
 @Injectable()
 export class ArtifactService implements OnApplicationBootstrap {
@@ -42,6 +43,7 @@ export class ArtifactService implements OnApplicationBootstrap {
     private readonly logger: Logger,
     private readonly metric: Metric,
     private readonly notification: NotificationService,
+    private readonly projectUsage: ProjectUsageService,
   ) {}
 
   onApplicationBootstrap() {
@@ -233,6 +235,13 @@ export class ArtifactService implements OnApplicationBootstrap {
     })
   }
 
+  async handleJobUpload(artifactId: number, uploadSize: number) {
+    const report = await Artifact.findOneByOrFail({ id: artifactId })
+
+    await this.projectUsage.recordStorageUsage(report.projectId, uploadSize)
+    await this.updateArtifactUploadSize(report, uploadSize)
+  }
+
   async dispatchJob(artifact: Artifact) {
     if (artifact.status !== BundleJobStatus.Pending) {
       artifact.status = BundleJobStatus.Pending
@@ -274,5 +283,15 @@ export class ArtifactService implements OnApplicationBootstrap {
       const baseline = artifact.baselineId ? await this.loader.load(artifact.baselineId) : undefined
       await this.checkSuiteService.endBundleCheck(artifact, baseline, project, update)
     }
+  }
+
+  private async updateArtifactUploadSize(artifact: Artifact, uploadSize: number) {
+    await Artifact.createQueryBuilder()
+      .update()
+      .set({
+        uploadSize: () => `upload_size + ${uploadSize}`,
+      })
+      .where({ id: artifact.id })
+      .execute()
   }
 }

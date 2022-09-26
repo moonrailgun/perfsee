@@ -27,9 +27,12 @@ import {
   SnapshotReport,
   SourceIssue,
 } from '@perfsee/platform-server/db'
+import { OnEvent } from '@perfsee/platform-server/event'
 import { Logger } from '@perfsee/platform-server/logger'
 import { createDataLoader } from '@perfsee/platform-server/utils'
-import { SnapshotStatus } from '@perfsee/server-common'
+import { JobType, SnapshotStatus } from '@perfsee/server-common'
+
+import { ProjectUsageService } from '../../project-usage/service'
 
 import { SnapshotReportFilter } from './types'
 
@@ -38,7 +41,7 @@ export class SnapshotReportService {
   loader = createDataLoader((ids: number[]) => SnapshotReport.findBy({ id: In(ids) }))
   snapshotLoader = createDataLoader((ids: number[]) => Snapshot.findBy({ id: In(ids) }))
 
-  constructor(private readonly logger: Logger) {}
+  constructor(private readonly logger: Logger, private readonly projectUsage: ProjectUsageService) {}
 
   getReportsByIids(projectId: number, iids: number[]) {
     return SnapshotReport.createQueryBuilder('report')
@@ -228,5 +231,23 @@ export class SnapshotReportService {
   async getPageId(projectId: number, iid: number) {
     const page = await Page.findOneByOrFail({ iid, projectId })
     return page.id
+  }
+
+  @OnEvent(`${JobType.LabAnalyze}.upload`)
+  async handleReportUploadSize(reportId: number, uploadSize: number) {
+    const report = await SnapshotReport.findOneByOrFail({ id: reportId })
+
+    await this.projectUsage.recordStorageUsage(report.projectId, uploadSize)
+    await this.updateLabReportUploadSize(report, uploadSize)
+  }
+
+  private async updateLabReportUploadSize(report: SnapshotReport, uploadSize: number) {
+    await SnapshotReport.createQueryBuilder()
+      .update()
+      .set({
+        uploadSize: () => `upload_size + ${uploadSize}`,
+      })
+      .where({ id: report.id })
+      .execute()
   }
 }

@@ -27,6 +27,9 @@ import {
   Job,
   Profile,
   Project,
+  ProjectJobUsage,
+  ProjectStorageUsage,
+  ProjectUsagePack,
   Setting,
   User,
   UserStarredProject,
@@ -273,12 +276,17 @@ export class ProjectService {
       input.name = githubVerification.caseSensitiveRepo
     }
 
+    const defaultUsagePack = await ProjectUsagePack.findOneByOrFail({
+      isDefault: true,
+    })
+
     const project = Project.create({
       name: name,
       namespace: namespace,
       host: host,
       slug: id,
       artifactBaselineBranch,
+      usagePack: defaultUsagePack,
     })
 
     await this.db
@@ -305,7 +313,17 @@ export class ProjectService {
           user,
         })
 
-        await manager.save([profile, env, setting, userStart])
+        const jobUsage = ProjectJobUsage.create({
+          project,
+          year: new Date().getFullYear(),
+          // getMonth() starts from 0
+          month: new Date().getMonth() + 1,
+        })
+        const storageUsage = ProjectStorageUsage.create({
+          project,
+        })
+
+        await manager.save([profile, env, setting, userStart, jobUsage, storageUsage])
       })
       .catch(mapInternalError('Create project Failed'))
 
