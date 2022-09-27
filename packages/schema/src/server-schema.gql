@@ -120,13 +120,13 @@ type ProjectUsagePack {
   """total storage used size"""
   isPublic: Boolean!
 
-  """job count limit within one month"""
+  """job count limit within one month, -1 means no limit"""
   jobCountMonthly: Int!
 
-  """job cost duration time limit within one month"""
-  jobTimeMonthly: Int!
+  """job cost duration time limit within one month, -1 means no limit"""
+  jobDurationMonthly: Int!
 
-  """total storage used size"""
+  """total storage used size, -1 means no limit"""
   storageSize: Int!
   createdAt: DateTime!
 }

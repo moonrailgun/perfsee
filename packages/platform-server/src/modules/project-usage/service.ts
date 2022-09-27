@@ -44,12 +44,16 @@ export class ProjectUsageService {
       throw new Error('Project has no usage pack.')
     }
 
-    if (
-      usage.jobCount >= limit.jobCountMonthly &&
-      usage.jobDuration >= limit.jobTimeMonthly &&
-      usage.storageSize >= limit.storageSize
-    ) {
-      throw new Error('Project usage exceeded.')
+    if (limit.jobCountMonthly !== -1 && usage.jobCount >= limit.jobCountMonthly) {
+      throw new Error('Project job count usage in this month has exceeded.')
+    }
+
+    if (limit.jobDurationMonthly !== -1 && usage.jobDuration >= limit.jobDurationMonthly) {
+      throw new Error('Project job duration time in this month has exceeded.')
+    }
+
+    if (limit.storageSize !== -1 && usage.storageSize >= limit.storageSize) {
+      throw new Error('Project storage size has exceeded.')
     }
 
     return true
@@ -70,10 +74,10 @@ export class ProjectUsageService {
 
   getProjectUsageLimit(project: Project) {
     if (project.usagePackId) {
-      return ProjectUsagePack.findOneBy({ id: project.usagePackId })
+      return ProjectUsagePack.findOneByOrFail({ id: project.usagePackId })
     }
 
-    return ProjectUsagePack.findOneBy({ isDefault: true })
+    return ProjectUsagePack.findOneByOrFail({ isDefault: true })
   }
 
   async recordStorageUsage(projectId: number, storage: number) {

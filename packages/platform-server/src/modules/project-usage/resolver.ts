@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Resolver, Query, Args, Int, Mutation, ResolveField, Parent, ID } from '@nestjs/graphql'
+import { Resolver, ResolveField, Parent } from '@nestjs/graphql'
 
-import { Profile, Project, ProjectUsagePack } from '@perfsee/platform-server/db'
+import { Project, ProjectUsagePack } from '@perfsee/platform-server/db'
 
 import { Auth } from '../auth'
 import { ProjectService } from '../project/service'
@@ -34,7 +34,7 @@ export class ProjectProjectUsageResolver {
   }
 
   @ResolveField(() => ProjectUsagePack, { name: 'usagePack', description: 'project usage pack' })
-  usagePack(@Parent() project: Project): Promise<ProjectUsagePack | null> {
+  usagePack(@Parent() project: Project): Promise<ProjectUsagePack> {
     return this.service.getProjectUsageLimit(project)
   }
 }

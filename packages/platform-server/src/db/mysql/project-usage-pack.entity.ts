@@ -36,15 +36,15 @@ export class ProjectUsagePack extends BaseEntity {
   @Column({ default: true })
   isPublic!: boolean
 
-  @Field({ description: 'job count limit within one month' })
+  @Field({ description: 'job count limit within one month, -1 means no limit' })
   @Column()
   jobCountMonthly!: number
 
-  @Field({ description: 'job cost duration time limit within one month' })
+  @Field({ description: 'job cost duration time limit within one month, -1 means no limit' })
   @Column()
-  jobTimeMonthly!: number
+  jobDurationMonthly!: number
 
-  @Field({ description: 'total storage used size' })
+  @Field({ description: 'total storage used size, -1 means no limit' })
   @Column()
   storageSize!: number
 
