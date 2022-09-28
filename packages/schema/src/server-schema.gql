@@ -1149,6 +1149,7 @@ type Mutation {
     """artifact id"""
     id: Int!
   ): Boolean!
+  deleteArtifact(projectId: ID!, artifactId: Int!): Boolean!
   updateRunner(id: ID!, input: UpdateRunnerInput!): Runner!
   deleteRunner(id: ID!): Boolean!
 
@@ -1172,6 +1173,7 @@ type Mutation {
   Delete page with given id. NOTE: all snapshot report having the same page id will be deleted as well.
   """
   deletePage(projectId: ID!, pageId: Int!): Boolean!
+  deleteSnapshotReport(projectId: ID!, snapshotReportId: Int!): Boolean!
 
   """update environment"""
   updateEnvironment(projectId: ID!, input: UpdateEnvironmentInput!): Environment!

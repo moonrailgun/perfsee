@@ -29,6 +29,7 @@ import {
 } from '@perfsee/platform-server/db'
 import { OnEvent } from '@perfsee/platform-server/event'
 import { Logger } from '@perfsee/platform-server/logger'
+import { ObjectStorage } from '@perfsee/platform-server/storage'
 import { createDataLoader } from '@perfsee/platform-server/utils'
 import { JobType, SnapshotStatus } from '@perfsee/server-common'
 
@@ -41,7 +42,11 @@ export class SnapshotReportService {
   loader = createDataLoader((ids: number[]) => SnapshotReport.findBy({ id: In(ids) }))
   snapshotLoader = createDataLoader((ids: number[]) => Snapshot.findBy({ id: In(ids) }))
 
-  constructor(private readonly logger: Logger, private readonly projectUsage: ProjectUsageService) {}
+  constructor(
+    private readonly logger: Logger,
+    private readonly projectUsage: ProjectUsageService,
+    private readonly storage: ObjectStorage,
+  ) {}
 
   getReportsByIids(projectId: number, iids: number[]) {
     return SnapshotReport.createQueryBuilder('report')
@@ -231,6 +236,29 @@ export class SnapshotReportService {
   async getPageId(projectId: number, iid: number) {
     const page = await Page.findOneByOrFail({ iid, projectId })
     return page.id
+  }
+
+  async deleteSnapshotsReportById(projectId: number, iid: number) {
+    const report = await SnapshotReport.findOneByOrFail({ iid, projectId })
+
+    for (const key of [
+      report.lighthouseStorageKey,
+      report.screencastStorageKey,
+      report.jsCoverageStorageKey,
+      report.traceEventsStorageKey,
+      report.flameChartStorageKey,
+      report.sourceCoverageStorageKey,
+    ]) {
+      if (key) {
+        await this.storage.deleteFolder(key)
+      }
+    }
+
+    await this.projectUsage.recordStorageUsage(projectId, report.uploadSize, true)
+    await SnapshotReport.remove(report)
+    await SourceIssue.delete({ snapshotReportId: report.id })
+
+    return true
   }
 
   @OnEvent(`${JobType.LabAnalyze}.upload`)

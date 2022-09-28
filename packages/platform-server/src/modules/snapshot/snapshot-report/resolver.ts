@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { BadRequestException } from '@nestjs/common'
-import { Resolver, Args, Int, ResolveField, Parent } from '@nestjs/graphql'
+import { Resolver, Args, Int, ResolveField, Parent, Mutation, ID } from '@nestjs/graphql'
 import { isNil, omitBy } from 'lodash'
 
 import { Environment, Page, Profile, Project, Snapshot, SnapshotReport, SourceIssue } from '@perfsee/platform-server/db'
@@ -23,7 +23,9 @@ import { transformInputType } from '@perfsee/platform-server/graphql'
 
 import { EnvironmentService } from '../../environment/service'
 import { PageService } from '../../page/service'
+import { Permission, PermissionGuard } from '../../permission'
 import { ProfileService } from '../../profile/service'
+import { ProjectService } from '../../project/service'
 
 import { SnapshotReportService } from './service'
 import { SnapshotReportFilter } from './types'
@@ -50,7 +52,19 @@ export class ReportResolver {
     private readonly envService: EnvironmentService,
     private readonly pageService: PageService,
     private readonly profileService: ProfileService,
+    private readonly projectService: ProjectService,
   ) {}
+
+  @PermissionGuard(Permission.Admin, 'projectId')
+  @Mutation(() => Boolean)
+  async deleteSnapshotReport(
+    @Args({ name: 'projectId', type: () => ID }) projectId: string,
+    @Args({ name: 'snapshotReportId', type: () => Int }) snapshotReportId: number,
+  ) {
+    const rawId = await this.projectService.resolveRawProjectIdBySlug(projectId)
+
+    return this.service.deleteSnapshotsReportById(rawId, snapshotReportId)
+  }
 
   @ResolveField(() => Environment, { name: 'environment', description: 'the environment this report used' })
   environment(@Parent() report: SnapshotReport) {

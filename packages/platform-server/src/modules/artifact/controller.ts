@@ -99,6 +99,8 @@ export class ArtifactController {
       const buildKey = `builds/${project.id}/${uuid()}.tar`
       await this.storage.upload(buildKey, file)
 
+      await this.projectUsage.recordStorageUsage(project.id, file.byteLength)
+
       const artifact = await this.artifactService.create(project, {
         iid: await this.internalId.generate(project.id, InternalIdUsage.Artifact),
         branch: params.branch,

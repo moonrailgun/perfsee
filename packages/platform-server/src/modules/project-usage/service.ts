@@ -80,7 +80,7 @@ export class ProjectUsageService {
     return ProjectUsagePack.findOneByOrFail({ isDefault: true })
   }
 
-  async recordStorageUsage(projectId: number, storage: number) {
+  async recordStorageUsage(projectId: number, storage: number, remove = false) {
     const record = await ProjectStorageUsage.findOneBy({ projectId })
 
     if (record) {
@@ -88,11 +88,11 @@ export class ProjectUsageService {
         .createQueryBuilder()
         .update(ProjectStorageUsage)
         .set({
-          storageSize: () => `storage_size + ${storage}`,
+          storageSize: () => `storage_size ${remove ? '-' : '+'} ${storage}`,
         })
         .where({ projectId })
         .execute()
-    } else {
+    } else if (!remove) {
       await ProjectStorageUsage.create({
         projectId,
         storageSize: storage,

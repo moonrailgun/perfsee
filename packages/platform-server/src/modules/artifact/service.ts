@@ -17,11 +17,12 @@ limitations under the License.
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common'
 import { In } from 'typeorm'
 
-import { Artifact, ArtifactEntrypoint, ArtifactName, Project } from '@perfsee/platform-server/db'
+import { AppVersion, Artifact, ArtifactEntrypoint, ArtifactName, DBService, Project } from '@perfsee/platform-server/db'
 import { EventEmitter } from '@perfsee/platform-server/event'
 import { PaginationInput } from '@perfsee/platform-server/graphql'
 import { Logger } from '@perfsee/platform-server/logger'
 import { Metric } from '@perfsee/platform-server/metrics'
+import { ObjectStorage } from '@perfsee/platform-server/storage'
 import { createDataLoader } from '@perfsee/platform-server/utils'
 import { BundleJobPayload, BundleJobUpdate, BundleJobStatus, JobType } from '@perfsee/server-common'
 
@@ -38,9 +39,11 @@ export class ArtifactService implements OnApplicationBootstrap {
   )
 
   constructor(
+    private readonly db: DBService,
     private readonly checkSuiteService: CheckSuiteService,
     private readonly event: EventEmitter,
     private readonly logger: Logger,
+    private readonly storage: ObjectStorage,
     private readonly metric: Metric,
     private readonly notification: NotificationService,
     private readonly projectUsage: ProjectUsageService,
@@ -262,6 +265,27 @@ export class ArtifactService implements OnApplicationBootstrap {
       buildKey: artifact.buildKey,
       baselineReportKey: baseline?.reportKey,
     }
+  }
+
+  async deleteArtifactById(projectId: number, iid: number) {
+    const artifact = await Artifact.findOneByOrFail({ iid, projectId })
+    const { id } = artifact
+
+    await this.db.transaction(async (manager) => {
+      await manager.getRepository(AppVersion).delete({ artifactId: id })
+      await manager.getRepository(ArtifactEntrypoint).delete({ projectId, artifactId: id })
+      await manager.remove(artifact)
+    })
+
+    for (const key of [artifact.buildKey, artifact.contentKey, artifact.reportKey]) {
+      if (key) {
+        await this.storage.deleteFolder(key)
+      }
+    }
+
+    await this.projectUsage.recordStorageUsage(projectId, artifact.uploadSize, true)
+
+    return true
   }
 
   private tapMetrics(artifact: Artifact) {
