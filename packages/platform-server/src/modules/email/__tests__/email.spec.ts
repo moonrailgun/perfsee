@@ -16,10 +16,11 @@ const testMail = {
 }
 
 const testOptions = {
+  enable: true,
   smtp: {
     host: 'smtp.example.com',
     port: 465,
-    auth: { pass: 'bar', user: 'foo' },
+    auth: { password: 'bar', user: 'foo' },
     secure: true,
   },
   from: {
@@ -30,14 +31,14 @@ const testOptions = {
 
 let createTransportStub: sinon.SinonStub
 let sendMailStub: sinon.SinonStub
-test.beforeEach(() => {
+test.before(() => {
   sendMailStub = sinon.stub().resolves({})
   createTransportStub = sinon.stub(nodemailer, 'createTransport').returns({
     sendMail: sendMailStub,
   } as any)
 })
 
-test.afterEach(() => {
+test.after(() => {
   createTransportStub.restore()
 })
 
@@ -47,6 +48,7 @@ test.serial('missing smtp option', async (t) => {
       EmailModule,
       ConfigModule.forRoot({
         email: {
+          enable: false,
           smtp: {} as any,
           from: {} as any,
         },
@@ -60,7 +62,6 @@ test.serial('missing smtp option', async (t) => {
   const logger = t.context.module.get(Logger)
   t.true(logger.warn.called)
   await email.sendMail(testMail)
-  t.is(createTransportStub.callCount, 0)
   t.is(sendMailStub.callCount, 0)
 })
 

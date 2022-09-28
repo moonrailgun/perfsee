@@ -250,6 +250,7 @@ type Project {
 }
 
 enum GitHost {
+  Unknown
   Github
   Gitlab
 }
@@ -451,10 +452,17 @@ type Application {
 }
 
 type ApplicationSetting {
+  enableSignup: Boolean!
+  enableOauth: Boolean!
+  enableProjectCreate: Boolean!
+  enableProjectDelete: Boolean!
+  enableProjectImport: Boolean!
   registrationToken: String!
-  jobZones: [String!]!
-  defaultJobZone: String!
-  updatedAt: DateTime!
+  oauthProviders: [ExternalAccount!]!
+}
+
+enum ExternalAccount {
+  github
 }
 
 type HeaderType {
@@ -789,10 +797,6 @@ type Account {
   externUsername: String
 }
 
-enum ExternalAccount {
-  github
-}
-
 type GithubRepository {
   id: Int!
   name: String!
@@ -837,6 +841,14 @@ type PaginatedGithubInstallations {
   pageInfo: PageInfo!
 }
 
+type Zone {
+  """all available geo locations"""
+  all: [String!]!
+
+  """default geo location"""
+  default: String!
+}
+
 type ProjectEdge {
   cursor: String!
   node: Project!
@@ -850,14 +862,6 @@ type PaginatedProjects {
 type ProjectIdVerificationResult {
   ok: Boolean!
   error: String
-}
-
-type Zone {
-  """all available geo locations"""
-  all: [String!]!
-
-  """default geo location"""
-  default: String!
 }
 
 type RunnerEdge {
@@ -1025,7 +1029,7 @@ type Query {
     """search project with git namespace/name"""
     query: String
   ): PaginatedProjects!
-  user: User!
+  user: User
   searchUsers(query: String!): [SearchUserResult!]!
 
   """
@@ -1376,6 +1380,14 @@ input UpdateTimerInput {
   whether only specific pages/profiles/envs will be measured when task triggered
   """
   monitorType: ScheduleMonitorType
+}
+
+input UpdateApplicationSettingsInput {
+  enableSignup: Boolean
+  enableOauth: Boolean
+  enableProjectCreate: Boolean
+  enableProjectDelete: Boolean
+  enableProjectImport: Boolean
 }
 
 input UpdateRunnerScriptInput {
