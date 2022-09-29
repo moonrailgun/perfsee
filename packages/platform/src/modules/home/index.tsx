@@ -1,4 +1,4 @@
-import { Layout, Advantages, HomeBanner, HomeFeatures } from './components'
+import { Layout, Advantages, HomeBanner, HomeFeatures, HomePrices } from './components'
 
 export function Home() {
   return (
@@ -6,6 +6,7 @@ export function Home() {
       <HomeBanner />
       <Advantages />
       <HomeFeatures />
+      <HomePrices />
     </Layout>
   )
 }
