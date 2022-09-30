@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker'
 
-import { Project, User, Profile, Environment, Setting } from '@perfsee/platform-server/db'
+import { Project, User, Profile, Environment, Setting, ProjectUsagePack } from '@perfsee/platform-server/db'
 import { InternalIdService } from '@perfsee/platform-server/helpers'
 import { Metric } from '@perfsee/platform-server/metrics'
 import test, { createMock, initTestDB, createDBTestingModule, DeepMocked, create } from '@perfsee/platform-server/test'
@@ -53,6 +53,9 @@ test.serial('create project', async (t) => {
   t.is(settings.length, 1)
 
   t.is(metricService.newProject.getCall(0).args[0], 1)
+
+  const defaultUsagePack = await ProjectUsagePack.findOneByOrFail({ isDefault: true })
+  t.is(projectCreated.usagePackId, defaultUsagePack.id)
 
   // clear
   await Profile.delete({ projectId: projectCreated.id })

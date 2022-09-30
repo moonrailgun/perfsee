@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Field, InputType, IntersectionType, ObjectType, OmitType, PartialType, PickType } from '@nestjs/graphql'
+import { IntersectionType, ObjectType, PickType } from '@nestjs/graphql'
 
 import { ProjectJobUsage, ProjectStorageUsage } from '@perfsee/platform-server/db'
 

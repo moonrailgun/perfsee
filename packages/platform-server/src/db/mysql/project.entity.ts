@@ -82,7 +82,7 @@ export class Project extends BaseEntity {
   @Column({ type: 'boolean', default: false })
   isPublic!: boolean
 
-  @Column()
+  @Column({ nullable: true })
   @RelationId('usagePack')
   usagePackId!: number
 

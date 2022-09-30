@@ -8,7 +8,9 @@
       "name": "Attach debug server",
       "port": 9229,
       "request": "attach",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "type": "pwa-node"
     },
     {
@@ -42,8 +44,12 @@
       "name": "Run Vscode Extension",
       "type": "extensionHost",
       "request": "launch",
-      "args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-extension/"],
-      "outFiles": ["${workspaceFolder}/packages/vscode-extension/dist/**/*.js"]
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-extension/"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/packages/vscode-extension/dist/**/*.js"
+      ]
     }
   ]
 }

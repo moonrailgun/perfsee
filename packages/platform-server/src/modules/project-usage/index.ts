@@ -20,12 +20,12 @@ import { DBModule } from '@perfsee/platform-server/db'
 
 import { ProjectModule } from '../project'
 
-import { ProjectProjectUsageResolver, ProjectUsageResolver } from './resolver'
+import { ProjectProjectUsageResolver } from './resolver'
 import { ProjectUsageService } from './service'
 
 @Module({
   imports: [ProjectModule, DBModule],
-  providers: [ProjectProjectUsageResolver, ProjectUsageResolver, ProjectUsageService],
+  providers: [ProjectProjectUsageResolver, ProjectUsageService],
   exports: [ProjectUsageService],
 })
 export class ProjectUsageModule {}

@@ -18,9 +18,6 @@ import { Resolver, ResolveField, Parent } from '@nestjs/graphql'
 
 import { Project, ProjectUsagePack } from '@perfsee/platform-server/db'
 
-import { Auth } from '../auth'
-import { ProjectService } from '../project/service'
-
 import { ProjectUsageService } from './service'
 import { ProjectUsage } from './types'
 
@@ -37,10 +34,4 @@ export class ProjectProjectUsageResolver {
   usagePack(@Parent() project: Project): Promise<ProjectUsagePack> {
     return this.service.getProjectUsageLimit(project)
   }
-}
-
-@Auth()
-@Resolver(() => ProjectUsage)
-export class ProjectUsageResolver {
-  constructor(private readonly service: ProjectUsageService, private readonly projectService: ProjectService) {}
 }

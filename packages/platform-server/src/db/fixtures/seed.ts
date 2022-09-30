@@ -24,6 +24,7 @@ import {
   PageWithProfile,
   Profile,
   Project,
+  ProjectUsagePack,
   User,
 } from '../mysql'
 
@@ -33,6 +34,7 @@ export async function seed() {
   return Promise.all([
     create(ApplicationSetting, { id: 1, registrationToken: 'registrationToken' }),
     seedUsers(),
+    seedProjectUsagePack(),
     seedProject(),
   ])
 }
@@ -64,6 +66,19 @@ export async function seedUsers() {
   ])
 
   return [admin, user]
+}
+
+export async function seedProjectUsagePack() {
+  const usagePack = await create(ProjectUsagePack, {
+    name: 'unlimited',
+    jobCountMonthly: -1,
+    jobDurationMonthly: -1,
+    storageSize: -1,
+    isDefault: true,
+    isPublic: true,
+  })
+
+  return [usagePack]
 }
 
 export async function seedProject() {
