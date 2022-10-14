@@ -44,8 +44,8 @@ export const UsageBlock = styled.div({
 })
 
 export const UsageBlockIcon = styled.div(({ theme }) => ({
-  width: '36px',
-  height: '36px',
+  width: '40px',
+  height: '40px',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -53,7 +53,7 @@ export const UsageBlockIcon = styled.div(({ theme }) => ({
   borderRadius: '4px',
 
   color: '#fff',
-  fontSize: '18px',
+  fontSize: '20px',
 }))
 
 export const UsageBlockInfo = styled.div({
@@ -79,8 +79,17 @@ export const UsageBlockTitle = styled.div(({ theme }) => ({
 export const ProgressWrapper = styled.div({
   flex: 1,
   display: 'flex',
-  alignItems: 'center',
+  flexDirection: 'column',
 })
+
+export const ProgressValue = styled.span(({ theme }) => ({
+  fontSize: '12px',
+  lineHeight: '12px',
+  transform: 'scale(0.8)',
+  transformOrigin: 'top left',
+  marginTop: '4px',
+  color: theme.text.colorSecondary,
+}))
 
 export const UsagePackWrapper = styled.div({
   width: '320px',

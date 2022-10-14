@@ -15,18 +15,12 @@ limitations under the License.
 */
 
 import { Module, EffectModule, Effect, ImmerReducer } from '@sigi/core'
-import { Draft, freeze } from 'immer'
+import { Draft } from 'immer'
 import { Observable } from 'rxjs'
 import { switchMap, map } from 'rxjs/operators'
 
 import { GraphQLClient, createErrorCatcher } from '@perfsee/platform/common'
-import {
-  projectTimeUsagesQuery,
-  ProjectTimeUsagesQuery,
-  TimeUsageInput,
-  ProjectUsageQuery,
-  projectUsageQuery,
-} from '@perfsee/schema'
+import { ProjectTimeUsagesQuery, ProjectUsageQuery, projectUsageQuery } from '@perfsee/schema'
 
 import { ProjectModule } from '../../../shared'
 
@@ -35,10 +29,6 @@ export type TimeUsage = ProjectTimeUsagesQuery['project']['timeUsage']['detail']
 interface State {
   usage: ProjectUsageQuery['project']['usage']
   usagePack: ProjectUsageQuery['project']['usagePack'] | null
-  timeUsages: {
-    total: number
-    data: TimeUsage
-  }
 }
 
 @Module('SettingsUsageModule')
@@ -50,35 +40,10 @@ export class SettingsUsageModule extends EffectModule<State> {
       storageSize: 0,
     },
     usagePack: null,
-    timeUsages: {
-      total: 0,
-      data: [],
-    },
   }
 
   constructor(private readonly client: GraphQLClient, private readonly project: ProjectModule) {
     super()
-  }
-
-  @Effect()
-  fetchTimeUsages(payload$: Observable<TimeUsageInput>) {
-    return payload$.pipe(
-      this.project.withProject,
-      switchMap(([project, input]) =>
-        this.client
-          .query({
-            query: projectTimeUsagesQuery,
-            variables: {
-              projectId: project!.id,
-              input,
-            },
-          })
-          .pipe(
-            createErrorCatcher('Failed to fetch project time usage.'),
-            map((data) => this.getActions().setTimeUsages(data.project.timeUsage)),
-          ),
-      ),
-    )
   }
 
   @Effect()
@@ -99,14 +64,6 @@ export class SettingsUsageModule extends EffectModule<State> {
           ),
       ),
     )
-  }
-
-  @ImmerReducer()
-  setTimeUsages(state: Draft<State>, usage: ProjectTimeUsagesQuery['project']['timeUsage']) {
-    state.timeUsages = {
-      total: usage.total,
-      data: freeze(usage.detail),
-    }
   }
 
   @ImmerReducer()

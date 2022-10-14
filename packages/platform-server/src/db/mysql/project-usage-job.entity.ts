@@ -22,9 +22,9 @@ import {
   BaseEntity,
   RelationId,
   Index,
-  OneToOne,
   JoinColumn,
   UpdateDateColumn,
+  ManyToOne,
 } from 'typeorm'
 
 import { Project } from './project.entity'
@@ -41,7 +41,7 @@ export class ProjectJobUsage extends BaseEntity {
   @Index()
   projectId!: number
 
-  @OneToOne(() => Project, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Project, { onDelete: 'CASCADE' })
   @JoinColumn()
   project!: Project
 

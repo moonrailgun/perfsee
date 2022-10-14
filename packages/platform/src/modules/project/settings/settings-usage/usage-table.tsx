@@ -9,6 +9,7 @@ import { formatTime, PrettyBytes } from '@perfsee/platform/common'
 
 import { SettingsUsageModule } from './module'
 import {
+  ProgressValue,
   ProgressWrapper,
   UsageBlock,
   UsageBlockIcon,
@@ -26,7 +27,7 @@ export const UsageTable = () => {
 
   const currentMonth = dayjs().format('YYYY/MM')
 
-  const [countPercent, countTooltip] = useMemo(() => {
+  const [countPercent, countUsage] = useMemo(() => {
     if (usagePack?.jobCountMonthly === -1) {
       return [0.5, `${usage.jobCount}/Unlimited`]
     }
@@ -38,7 +39,7 @@ export const UsageTable = () => {
     return [percent, tooltip]
   }, [usage.jobCount, usagePack?.jobCountMonthly])
 
-  const [durationPercent, durationTooltip] = useMemo(() => {
+  const [durationPercent, durationUsage] = useMemo(() => {
     if (usagePack?.jobDurationMonthly === -1) {
       return [0.5, `${formatTime(usage.jobDuration)}/Unlimited`]
     }
@@ -50,7 +51,7 @@ export const UsageTable = () => {
     return [percent, tooltip]
   }, [usage.jobDuration, usagePack?.jobDurationMonthly])
 
-  const [storagePercent, storageTooltip] = useMemo(() => {
+  const [storagePercent, storageUsage] = useMemo(() => {
     if (usagePack?.storageSize === -1) {
       return [0.5, `${PrettyBytes.create(usage.storageSize)}/Unlimited`]
     }
@@ -98,7 +99,8 @@ export const UsageTable = () => {
               <span>{currentMonth}</span>
             </UsageBlockTitle>
             <ProgressWrapper>
-              <Progress percent={countPercent} tooltip={countTooltip} />
+              <Progress percent={countPercent} />
+              <ProgressValue>{countUsage}</ProgressValue>
             </ProgressWrapper>
           </UsageBlockInfo>
         </UsageBlock>
@@ -112,7 +114,8 @@ export const UsageTable = () => {
               <span>{currentMonth}</span>
             </UsageBlockTitle>
             <ProgressWrapper>
-              <Progress percent={durationPercent} tooltip={durationTooltip} />
+              <Progress percent={durationPercent} />
+              <ProgressValue>{durationUsage}</ProgressValue>
             </ProgressWrapper>
           </UsageBlockInfo>
         </UsageBlock>
@@ -125,7 +128,8 @@ export const UsageTable = () => {
               <h4>Storage</h4>
             </UsageBlockTitle>
             <ProgressWrapper>
-              <Progress percent={storagePercent} tooltip={storageTooltip} />
+              <Progress percent={storagePercent} />
+              <ProgressValue>{storageUsage}</ProgressValue>
             </ProgressWrapper>
           </UsageBlockInfo>
         </UsageBlock>

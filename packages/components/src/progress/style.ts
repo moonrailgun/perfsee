@@ -22,10 +22,10 @@ export const ProgressContainer = styled.div<{ backgroundColor?: string; width?: 
     alignItems: 'center',
     justifyContent: 'flex-start',
     width: width ?? '100%',
-    height: height ?? '2px',
+    height: height ?? '4px',
     backgroundColor: backgroundColor ?? theme.colors.secondary,
     overflow: 'hidden',
-    borderRadius: '1px',
+    borderRadius: '2px',
   }),
 )
 
