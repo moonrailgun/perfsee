@@ -38,12 +38,23 @@ type FactoryParams<T> = { [key in keyof T]: T[key] | number }
 function makePathsFrom<Params = void>(path: string) {
   // https://github.com/pillarjs/path-to-regexp#compile-reverse-path-to-regexp
   return compile(path) as PathMaker<Params, Params extends void ? false : true>
-}`
+}
+
+function makeTitlesFrom(title: string, data: Record<string, any>) {
+  return title.replace(/\\{(.*?)\\}/g, (match, key) => data[key] ?? match)
+}
+`
 
 interface YamlSchema {
   base: string
+  title?: string
   paths: {
-    [key: string]: string | YamlSchema
+    [key: string]:
+      | {
+          path: string
+          title?: string
+        }
+      | YamlSchema
   }
 }
 
@@ -81,6 +92,21 @@ function routeJoin(a: string, b: string) {
   }
 
   return base + (query ? `\\?${query}` : '')
+}
+
+function titleJoin(a?: string, b?: string) {
+  if (!a?.trim() || !b?.trim()) {
+    return a ?? b ?? ''
+  }
+  return `${a} | ${b}`
+}
+
+function buildTitleFunction(title: string) {
+  if (!title.trim()) {
+    return `() => ''`
+  }
+
+  return `(data: Record<string, any>) => makeTitlesFrom('${title}', data)`
 }
 
 function getTypeString(tokens: Token[]): string {
@@ -152,15 +178,15 @@ function serializeSchema(schema: YamlSchema, parent = ''): TokenSchema {
       tokens: parse(basePath),
     },
     ...Object.entries(schema.paths).reduce((acc, [key, value]) => {
-      if (typeof value === 'string') {
-        const path = routeJoin(basePath, value)
+      if (value['path']) {
+        const path = routeJoin(basePath, value['path'])
         acc[key] = {
           path,
           tokens: parse(path),
         }
       } else {
         acc[key] = {
-          children: serializeSchema(value, basePath),
+          children: serializeSchema(value as YamlSchema, basePath),
         }
       }
 
@@ -193,11 +219,31 @@ function stringifyRoutes(rootSchema: TokenSchema, parentPaths: string[] = []) {
   return { routeTypes, staticPaths: staticPath, pathFactory }
 }
 
+function serializeTitles(schema: YamlSchema, parent = '') {
+  const baseTitle = titleJoin(schema.title, parent)
+
+  return {
+    home: buildTitleFunction(baseTitle),
+    ...Object.entries(schema.paths).reduce((acc, [key, value]) => {
+      if (value['path']) {
+        const title = titleJoin(value.title, baseTitle)
+        acc[key] = buildTitleFunction(title)
+      } else {
+        acc[key] = serializeTitles(value as YamlSchema, baseTitle)
+      }
+
+      return acc
+    }, {}),
+  }
+}
+
 export async function generateRoutes() {
   return new Promise<void>((resolve, reject) => {
     const schema = loadYaml(routesDef)
     const tokenSchema = serializeSchema(schema)
     const { routeTypes, staticPaths, pathFactory } = stringifyRoutes(tokenSchema)
+
+    const titles = serializeTitles(schema)
 
     const result = `${template}
 
@@ -206,6 +252,8 @@ export async function generateRoutes() {
   export const staticPath = ${codeStringify(staticPaths)}
 
   export const pathFactory = ${codeStringify(pathFactory)}
+
+  export const titleFactory = ${codeStringify(titles)}
   `
     fs.writeFile(output, prettier(result), (err) => {
       if (err) {

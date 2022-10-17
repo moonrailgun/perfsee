@@ -14,9 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Switch, Redirect, Route } from 'react-router'
+import { Switch, Redirect } from 'react-router'
 
-import { staticPath } from '@perfsee/shared/routes'
+import { Route } from '@perfsee/components'
+import { staticPath, titleFactory } from '@perfsee/shared/routes'
 
 import { Competitor } from './competitor'
 import { CompetitorReport } from './competitor-report'
@@ -25,8 +26,18 @@ export const CompetitorRoutes = () => {
   return (
     <div style={{ padding: '0 20px' }}>
       <Switch>
-        <Route exact={true} path={staticPath.project.competitor.home} component={Competitor} />
-        <Route exact={true} path={staticPath.project.competitor.report} component={CompetitorReport} />
+        <Route
+          exact={true}
+          path={staticPath.project.competitor.home}
+          title={titleFactory.project.competitor.home}
+          component={Competitor}
+        />
+        <Route
+          exact={true}
+          path={staticPath.project.competitor.report}
+          title={titleFactory.project.competitor.report}
+          component={CompetitorReport}
+        />
         <Redirect to={staticPath.notFound} />
       </Switch>
     </div>

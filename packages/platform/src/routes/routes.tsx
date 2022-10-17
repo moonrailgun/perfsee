@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Route, Switch } from 'react-router'
+import { Switch } from 'react-router'
 
-import { NotFound } from '@perfsee/components'
-import { staticPath } from '@perfsee/shared/routes'
+import { NotFound, Route } from '@perfsee/components'
+import { staticPath, titleFactory } from '@perfsee/shared/routes'
 
 import { LoginRedirect } from '../modules/login/login-redirect'
 import { User } from '../modules/shared'
@@ -45,28 +45,64 @@ export const Routes = ({ user }: { user: User | null }) => {
   return (
     <Switch>
       {/* pages without login */}
-      <Route exact={true} path={staticPath.home} component={HomePage} />
-      <Route exact={true} path={staticPath.features.bundle} component={FeaturesBundle} />
-      <Route exact={true} path={staticPath.features.lab} component={FeaturesLab} />
-      <Route exact={true} path={staticPath.features.source} component={FeaturesSource} />
+      <Route exact={true} path={staticPath.home} title={titleFactory.home} component={HomePage} />
+      <Route
+        exact={true}
+        path={staticPath.features.bundle}
+        title={titleFactory.features.bundle}
+        component={FeaturesBundle}
+      />
+      <Route exact={true} path={staticPath.features.lab} title={titleFactory.features.lab} component={FeaturesLab} />
+      <Route
+        exact={true}
+        path={staticPath.features.source}
+        title={titleFactory.features.source}
+        component={FeaturesSource}
+      />
 
-      <Route exact={true} path={staticPath.login} component={Login} />
-      <Route exact={true} path={staticPath.register} component={Register} />
-      <Route exact={true} path={staticPath.status} component={StatusPage} />
-      <Route exact={true} path={staticPath.license} component={LicensePage} />
-      <Route exact={true} path={staticPath.me.editPassword} component={EditPassword} />
-      <Route exact={true} path={staticPath.me.resetPassword} component={ResetPassword} />
+      <Route exact={true} path={staticPath.login} title={titleFactory.login} component={Login} />
+      <Route exact={true} path={staticPath.register} title={titleFactory.register} component={Register} />
+      <Route exact={true} path={staticPath.status} title={titleFactory.status} component={StatusPage} />
+      <Route exact={true} path={staticPath.license} title={titleFactory.license} component={LicensePage} />
+      <Route
+        exact={true}
+        path={staticPath.me.editPassword}
+        title={titleFactory.me.editPassword}
+        component={EditPassword}
+      />
+      <Route
+        exact={true}
+        path={staticPath.me.resetPassword}
+        title={titleFactory.me.resetPassword}
+        component={ResetPassword}
+      />
 
       {/* pages with login */}
       {user ? (
         <Switch>
-          <Route exact={true} path={staticPath.importGithub} component={ImportGithub} />
-          <Route exact={true} path={staticPath.me.home} component={Me} />
-          <Route exact={true} path={staticPath.projects} component={ProjectListPage} />
-          {user.isAdmin && <Route exact={true} path={staticPath.applications} component={Applications} />}
-          <Route exact={true} path={staticPath.accessToken} component={AccessToken} />
-          <Route path={staticPath.project.feature} component={ProjectFeaturePage} />
-          <Route path="*" render={NotFound} />
+          <Route
+            exact={true}
+            path={staticPath.importGithub}
+            title={titleFactory.importGithub}
+            component={ImportGithub}
+          />
+          <Route exact={true} path={staticPath.me.home} title={titleFactory.me.home} component={Me} />
+          <Route exact={true} path={staticPath.projects} title={titleFactory.projects} component={ProjectListPage} />
+          {user.isAdmin && (
+            <Route
+              exact={true}
+              path={staticPath.applications}
+              title={titleFactory.applications}
+              component={Applications}
+            />
+          )}
+          <Route exact={true} path={staticPath.accessToken} title={titleFactory.accessToken} component={AccessToken} />
+          <Route
+            path={staticPath.project.feature}
+            title={titleFactory.project.feature}
+            component={ProjectFeaturePage}
+          />
+          <Route path="*" title={titleFactory.notFound} render={NotFound} />
         </Switch>
       ) : (
         <LoginRedirect />

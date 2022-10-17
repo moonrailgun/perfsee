@@ -14,9 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Switch, Redirect, Route } from 'react-router'
+import { Switch, Redirect } from 'react-router'
 
-import { staticPath } from '@perfsee/shared/routes'
+import { Route } from '@perfsee/components'
+import { staticPath, titleFactory } from '@perfsee/shared/routes'
 
 import { ComparisonBox } from '../components/comparison-box'
 import { SnapshotDetail } from '../snapshots'
@@ -27,8 +28,18 @@ export const LabRoutes = () => {
   return (
     <div style={{ padding: '0 20px' }}>
       <Switch>
-        <Route exact={true} path={staticPath.project.lab.home} component={PaginationSnapshotList} />
-        <Route exact={true} path={staticPath.project.lab.report} component={SnapshotDetail} />
+        <Route
+          exact={true}
+          path={staticPath.project.lab.home}
+          title={titleFactory.project.lab.home}
+          component={PaginationSnapshotList}
+        />
+        <Route
+          exact={true}
+          path={staticPath.project.lab.report}
+          title={titleFactory.project.lab.report}
+          component={SnapshotDetail}
+        />
         <Redirect to={staticPath.notFound} />
       </Switch>
       <ComparisonBox />

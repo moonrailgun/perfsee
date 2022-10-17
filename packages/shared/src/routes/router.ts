@@ -12,6 +12,10 @@ function makePathsFrom<Params = void>(path: string) {
   return compile(path) as PathMaker<Params, Params extends void ? false : true>
 }
 
+function makeTitlesFrom(title: string, data: Record<string, any>) {
+  return title.replace(/\{(.*?)\}/g, (match, key) => data[key] ?? match)
+}
+
 export interface RouteTypes {
   home: void
   docs: { home: void; api: void }
@@ -151,5 +155,62 @@ export const pathFactory = {
     jobTrace: makePathsFrom<FactoryParams<RouteTypes['project']['jobTrace']>>(
       '/projects/:projectId/jobs/:type/:entityId',
     ),
+  },
+}
+
+export const titleFactory = {
+  home: (data: Record<string, any>) => makeTitlesFrom('Perfsee', data),
+  docs: {
+    home: (data: Record<string, any>) => makeTitlesFrom('Perfsee', data),
+    api: (data: Record<string, any>) => makeTitlesFrom('Perfsee', data),
+  },
+  features: {
+    home: (data: Record<string, any>) => makeTitlesFrom('Perfsee', data),
+    bundle: (data: Record<string, any>) => makeTitlesFrom('Perfsee', data),
+    lab: (data: Record<string, any>) => makeTitlesFrom('Perfsee', data),
+    source: (data: Record<string, any>) => makeTitlesFrom('Perfsee', data),
+  },
+  projects: (data: Record<string, any>) => makeTitlesFrom('Projects | Perfsee', data),
+  notFound: (data: Record<string, any>) => makeTitlesFrom('Not found | Perfsee', data),
+  status: (data: Record<string, any>) => makeTitlesFrom('Status | Perfsee', data),
+  license: (data: Record<string, any>) => makeTitlesFrom('License | Perfsee', data),
+  applications: (data: Record<string, any>) => makeTitlesFrom('Perfsee', data),
+  accessToken: (data: Record<string, any>) => makeTitlesFrom('Access token | Perfsee', data),
+  me: {
+    home: (data: Record<string, any>) => makeTitlesFrom('Me | Perfsee', data),
+    editPassword: (data: Record<string, any>) => makeTitlesFrom('Edit password | Me | Perfsee', data),
+    resetPassword: (data: Record<string, any>) => makeTitlesFrom('Reset password | Me | Perfsee', data),
+  },
+  login: (data: Record<string, any>) => makeTitlesFrom('Login | Perfsee', data),
+  importGithub: (data: Record<string, any>) => makeTitlesFrom('Import github | Perfsee', data),
+  register: (data: Record<string, any>) => makeTitlesFrom('Register | Perfsee', data),
+  project: {
+    home: (data: Record<string, any>) => makeTitlesFrom('Home | {projectId} | Perfsee', data),
+    feature: (data: Record<string, any>) => makeTitlesFrom('{feature} | {projectId} | Perfsee', data),
+    statistics: {
+      home: (data: Record<string, any>) => makeTitlesFrom('Statistics | {projectId} | Perfsee', data),
+      artifacts: (data: Record<string, any>) => makeTitlesFrom('Artifacts | Statistics | {projectId} | Perfsee', data),
+      snapshots: (data: Record<string, any>) => makeTitlesFrom('Snapshots | Statistics | {projectId} | Perfsee', data),
+    },
+    bundle: {
+      home: (data: Record<string, any>) => makeTitlesFrom('Bundle | {projectId} | Perfsee', data),
+      detail: (data: Record<string, any>) =>
+        makeTitlesFrom('Bundle #{bundleId} | Bundle | {projectId} | Perfsee', data),
+      jobBundleContent: (data: Record<string, any>) =>
+        makeTitlesFrom('Bundle content #{bundleId} | Bundle | {projectId} | Perfsee', data),
+    },
+    lab: {
+      home: (data: Record<string, any>) => makeTitlesFrom('Lab | {projectId} | Perfsee', data),
+      report: (data: Record<string, any>) => makeTitlesFrom('Report #{reportId} | Lab | {projectId} | Perfsee', data),
+    },
+    competitor: {
+      home: (data: Record<string, any>) => makeTitlesFrom('Competitor | {projectId} | Perfsee', data),
+      report: (data: Record<string, any>) =>
+        makeTitlesFrom('Competitor Report | Competitor | {projectId} | Perfsee', data),
+    },
+    source: (data: Record<string, any>) => makeTitlesFrom('Source | {projectId} | Perfsee', data),
+    report: (data: Record<string, any>) => makeTitlesFrom('Report | {projectId} | Perfsee', data),
+    settings: (data: Record<string, any>) => makeTitlesFrom('{settingName} setting | {projectId} | Perfsee', data),
+    jobTrace: (data: Record<string, any>) => makeTitlesFrom('{type} job #{entityId} | {projectId} | Perfsee', data),
   },
 }

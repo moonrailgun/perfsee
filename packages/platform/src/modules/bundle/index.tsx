@@ -14,10 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Switch, Redirect, Route } from 'react-router'
+import { Switch, Redirect } from 'react-router'
 
+import { Route } from '@perfsee/components'
 import { lazy } from '@perfsee/platform/common'
-import { staticPath } from '@perfsee/shared/routes'
+import { staticPath, titleFactory } from '@perfsee/shared/routes'
 
 import { BundleReportContainer } from './detail'
 import { BundleList } from './list'
@@ -28,9 +29,24 @@ export const BundleRoutes = () => {
   return (
     <div style={{ padding: '0 20px' }}>
       <Switch>
-        <Route exact={true} path={staticPath.project.bundle.home} component={BundleList} />
-        <Route exact={true} path={staticPath.project.bundle.detail} component={BundleReportContainer} />
-        <Route exact={true} path={staticPath.project.bundle.jobBundleContent} component={BundleContentContainer} />
+        <Route
+          exact={true}
+          path={staticPath.project.bundle.home}
+          title={titleFactory.project.bundle.home}
+          component={BundleList}
+        />
+        <Route
+          exact={true}
+          path={staticPath.project.bundle.detail}
+          title={titleFactory.project.bundle.detail}
+          component={BundleReportContainer}
+        />
+        <Route
+          exact={true}
+          path={staticPath.project.bundle.jobBundleContent}
+          title={titleFactory.project.bundle.jobBundleContent}
+          component={BundleContentContainer}
+        />
         <Redirect to={staticPath.notFound} />
       </Switch>
     </div>
