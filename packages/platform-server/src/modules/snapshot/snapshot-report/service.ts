@@ -180,64 +180,6 @@ export class SnapshotReportService {
     return SourceIssue.createQueryBuilder().where('snapshot_report_id = :reportId', { reportId }).getMany()
   }
 
-  getSnapshot(id: number) {
-    return Snapshot.findOneBy({ id })
-  }
-
-  getPageIds(projectId: number, iids: number[]) {
-    return Page.createQueryBuilder()
-      .where('project_id = :projectId')
-      .andWhere('iid in (:...iids)')
-      .select('id')
-      .setParameters({
-        projectId: projectId,
-        iids,
-      })
-      .getRawMany<{ id: number }>()
-      .then((rows) => rows.map(({ id }) => id))
-  }
-
-  getProfileIds(projectId: number, iids: number[]) {
-    return Profile.createQueryBuilder()
-      .where('project_id = :projectId')
-      .andWhere('iid in (:...iids)')
-      .select('id')
-      .setParameters({
-        projectId: projectId,
-        iids,
-      })
-      .getRawMany<{ id: number }>()
-      .then((rows) => rows.map(({ id }) => id))
-  }
-
-  getEnvIds(projectId: number, iids: number[]) {
-    return Environment.createQueryBuilder()
-      .where('project_id = :projectId')
-      .andWhere('iid in (:...iids)')
-      .select('id')
-      .setParameters({
-        projectId: projectId,
-        iids,
-      })
-      .getRawMany<{ id: number }>()
-      .then((rows) => rows.map(({ id }) => id))
-  }
-
-  async getEnvId(projectId: number, iid: number) {
-    const env = await Environment.findOneByOrFail({ projectId, iid })
-    return env.id
-  }
-
-  async getProfileId(projectId: number, iid: number) {
-    const profile = await Profile.findOneByOrFail({ iid, projectId })
-    return profile.id
-  }
-
-  async getPageId(projectId: number, iid: number) {
-    const page = await Page.findOneByOrFail({ iid, projectId })
-    return page.id
-  }
-
   async deleteSnapshotsReportById(projectId: number, iid: number) {
     const report = await SnapshotReport.findOneByOrFail({ iid, projectId })
 
@@ -277,5 +219,20 @@ export class SnapshotReportService {
       })
       .where({ id: report.id })
       .execute()
+  }
+
+  private async getEnvId(projectId: number, iid: number) {
+    const env = await Environment.findOneByOrFail({ projectId, iid })
+    return env.id
+  }
+
+  private async getProfileId(projectId: number, iid: number) {
+    const profile = await Profile.findOneByOrFail({ iid, projectId })
+    return profile.id
+  }
+
+  private async getPageId(projectId: number, iid: number) {
+    const page = await Page.findOneByOrFail({ iid, projectId })
+    return page.id
   }
 }

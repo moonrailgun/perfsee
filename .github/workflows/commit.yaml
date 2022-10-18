@@ -66,6 +66,7 @@ jobs:
         run: yarn test:concurrent
       - name: Upload coverage
         uses: actions/upload-artifact@v3.1.0
+        if: ${{ matrix.host == 'ubuntu-latest' }}
         with:
           name: test-coverage
           path: ${{ env.NODE_V8_COVERAGE }}
