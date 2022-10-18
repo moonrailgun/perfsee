@@ -451,7 +451,7 @@ type Application {
   authorizedProjects: [ApplicationAuthorizedProjectsNode!]!
 }
 
-type ApplicationSetting {
+type ApplicationSettings {
   enableSignup: Boolean!
   enableOauth: Boolean!
   enableProjectCreate: Boolean!
@@ -1062,7 +1062,7 @@ type Query {
   availableOAuthProviders: [ExternalAccount!]!
   application(id: Int!): Application!
   applications(pagination: PaginationInput = {first: 10}): PaginatedApplications!
-  applicationSetting: ApplicationSetting!
+  applicationSettings: ApplicationSettings!
   zone: Zone!
   runnerScripts(jobType: JobType!): [RunnerScript!]!
   activatedRunnerScripts(jobType: JobType!): RunnerScript
@@ -1169,6 +1169,7 @@ type Mutation {
   insertAvailableJobZones(zones: [String!]!): [String!]!
   deleteAvailableJobZones(zones: [String!]!): [String!]!
   setDefaultJobZone(zone: String!): String!
+  updateApplicationSettings(settings: UpdateApplicationSettingsInput!): ApplicationSettings!
   updateRunnerScript(jobType: JobType!, version: String!, input: UpdateRunnerScriptInput!): RunnerScript!
 }
 

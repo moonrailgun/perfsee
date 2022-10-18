@@ -14,7 +14,6 @@ paths:
   notFound: /404
   status: /status
   license: /license
-  applications: /applications
   accessToken: /access-token
   me:
     base: /me
@@ -51,3 +50,12 @@ paths:
       report: /report
       settings: /settings/:settingName?
       jobTrace: /jobs/:type/:entityId
+  admin:
+    base: /admin
+    paths:
+      part: /:part?
+      settings: /settings
+      status: /status
+      applications: /applications
+      runners: /runners
+      scripts: /runner-scripts
