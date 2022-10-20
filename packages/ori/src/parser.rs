@@ -18,7 +18,7 @@ use super::profile::{load_chrome_main_thread_profile, Profile};
 use anyhow::Result;
 use rayon::prelude::*;
 use regex::Regex;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sourcemap::SourceMap as RawSourceMap;
 use std::collections::HashMap;
 use std::fs::File;
@@ -36,15 +36,15 @@ impl Deref for SourceMap {
   }
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all(deserialize = "camelCase"))]
-struct FileMeta {
+pub struct FileMeta {
   file_name: String,
   disk_path: String,
-  stats_index: usize,
+  bundle_id: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all(deserialize = "camelCase"))]
 struct Bundle {
   module_map: HashMap<String, String>,
@@ -56,7 +56,7 @@ struct Bundle {
 #[serde(rename_all(deserialize = "camelCase"))]
 struct BundleMeta {
   files: Vec<FileMeta>,
-  bundles: Vec<Bundle>,
+  bundles: HashMap<String, Bundle>,
 }
 
 impl BundleMeta {
@@ -66,7 +66,7 @@ impl BundleMeta {
       .files
       .iter()
       .find(|file_meta| file.ends_with(&file_meta.file_name))
-      .and_then(|file_meta| self.bundles.get(file_meta.stats_index))
+      .and_then(|file_meta| self.bundles.get(&file_meta.bundle_id))
   }
 
   fn module_name_by_file(&self, file: &str, mod_id: &str) -> Option<&str> {
@@ -75,7 +75,7 @@ impl BundleMeta {
       .and_then(|bundle| bundle.module_map.get(mod_id).map(|s| s.as_str()))
   }
 
-  fn generate_source_maps(&self) -> Vec<(usize, &str, SourceMap)> {
+  fn generate_source_maps(&self) -> Vec<(&str, &str, SourceMap)> {
     self
       .files
       .par_iter()
@@ -85,7 +85,7 @@ impl BundleMeta {
         match File::open(&source_map_file) {
           Ok(file_reader) => match RawSourceMap::from_reader(file_reader) {
             Ok(source_map) => Some((
-              meta.stats_index,
+              meta.bundle_id.as_str(),
               meta.file_name.as_str(),
               SourceMap(source_map),
             )),
@@ -131,8 +131,8 @@ impl BundleMeta {
   /// returns: './packages/platform/xxx'
   /// ```
   ///
-  fn to_relative_path(&self, bundle_index: usize, path: &str) -> String {
-    let bundle = self.bundles.get(bundle_index).unwrap();
+  fn to_relative_path(&self, bundle_id: &str, path: &str) -> String {
+    let bundle = self.bundles.get(bundle_id).unwrap();
     if bundle.repo_path.is_none() {
       return path.to_owned();
     }
@@ -237,8 +237,10 @@ pub fn parse(profile_path: &str, bundle_meta_path: &str) -> Result<Profile> {
       let line = frame.line.unwrap();
       let col = frame.col.unwrap();
 
-      let bundle_index = source_map.unwrap().0;
+      let bundle_id = source_map.unwrap().0;
       let source_map = &source_map.unwrap().2;
+
+      frame.bundle_id = Some(bundle_id.to_owned());
 
       if let Some(token) = source_map.lookup_token(line - 1, col - 1) {
         if let Some(source) = token.get_source() {
@@ -257,7 +259,7 @@ pub fn parse(profile_path: &str, bundle_meta_path: &str) -> Result<Profile> {
               frame.node_module = Some("(webpack)".to_string());
               frame.file = source_path.to_string();
             } else {
-              frame.file = bundle_meta.to_relative_path(bundle_index, source_path);
+              frame.file = bundle_meta.to_relative_path(bundle_id, source_path);
               if frame.file.is_empty() {
                 frame.node_module = Some("(unknown)".to_string());
               } else {

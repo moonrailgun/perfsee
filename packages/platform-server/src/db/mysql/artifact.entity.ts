@@ -25,11 +25,13 @@ import {
   RelationId,
   Index,
   BaseEntity,
+  OneToMany,
 } from 'typeorm'
 
 import { BundleJobStatus } from '@perfsee/server-common'
 
 import type { Project } from './project.entity'
+import { SourceIssue } from './source-issue.entity'
 
 registerEnumType(BundleJobStatus, {
   name: 'BundleJobStatus',
@@ -111,6 +113,9 @@ export class Artifact extends BaseEntity {
 
   @Column({ type: 'boolean', default: false })
   isBaseline!: boolean
+
+  @OneToMany('SourceIssue', 'artifact')
+  sourceIssues!: SourceIssue[]
 
   @Field(() => GraphQLISODateTime, { description: 'artifact created timestamp' })
   @CreateDateColumn({ type: 'timestamp' })

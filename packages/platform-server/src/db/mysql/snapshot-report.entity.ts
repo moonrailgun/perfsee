@@ -138,6 +138,12 @@ export class SnapshotReport extends BaseEntity {
   @Column({ type: 'varchar', nullable: true })
   sourceCoverageStorageKey!: string | null
 
+  @Column({ type: 'varchar', nullable: true })
+  scriptHashStorageKey!: string | null
+
+  @Column({ type: 'json', nullable: true })
+  sourceArtifactIds!: number[] | null
+
   @Field(() => GraphQLJSON, { description: 'key metrics data' })
   @Column({ type: 'json', nullable: true })
   metrics!: Record<MetricKeyType, number | null | undefined>

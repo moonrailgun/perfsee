@@ -41,6 +41,13 @@ module.exports = {
     password: process.env.REDIS_PASSWORD,
     db: parseInt(process.env.REDIS_DB) || 0,
   },
+  /** @type {import('ioredis').RedisOptions} */
+  sourceMapRedis: {
+    host: process.env.SOURCE_MAP_REDIS_HOST || process.env.REDIS_HOST || '127.0.0.1',
+    port: parseInt(process.env.SOURCE_MAP_REDIS_PORT || process.env.REDIS_PORT) || 6379,
+    password: process.env.SOURCE_MAP_REDIS_PASSWORD ?? process.env.REDIS_PASSWORD,
+    db: parseInt(process.env.SOURCE_MAP_REDIS_DB ?? process.env.REDIS_DB) || 0,
+  },
   objectStorage: {
     bucket: process.env.ARTIFACTS_STORAGE_BUCKET_NAME,
     accessToken: process.env.ARTIFACTS_STORAGE_ACCESS_TOKEN,

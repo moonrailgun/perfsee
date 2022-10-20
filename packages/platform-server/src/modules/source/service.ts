@@ -15,25 +15,29 @@ limitations under the License.
 */
 
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common'
-import { uniqBy } from 'lodash'
+import { uniq, uniqBy } from 'lodash'
 
 import { Artifact, InternalIdUsage, Page, Snapshot, SnapshotReport, SourceIssue } from '@perfsee/platform-server/db'
 import { EventEmitter } from '@perfsee/platform-server/event'
 import { PaginationInput } from '@perfsee/platform-server/graphql'
 import { InternalIdService } from '@perfsee/platform-server/helpers'
 import { Logger } from '@perfsee/platform-server/logger'
-import { JobType, SnapshotStatus, SourceAnalyzeJob } from '@perfsee/server-common'
-import { FlameChartDiagnostic } from '@perfsee/shared'
+import { ObjectStorage } from '@perfsee/platform-server/storage'
+import { JobType, SourceAnalyzeJob } from '@perfsee/server-common'
+import { FlameChartDiagnostic, ScriptHashSchema } from '@perfsee/shared'
 
-import { SnapshotReportService } from '../snapshot/snapshot-report/service'
+import { SettingService } from '../setting/service'
+import { SourceMapService } from '../sourcemap/service'
 
 @Injectable()
 export class SourceService implements OnApplicationBootstrap {
   constructor(
-    private readonly reportService: SnapshotReportService,
     private readonly logger: Logger,
     private readonly internalIdService: InternalIdService,
+    private readonly sourceMapService: SourceMapService,
+    private readonly settingService: SettingService,
     private readonly event: EventEmitter,
+    private readonly storage: ObjectStorage,
   ) {}
 
   onApplicationBootstrap() {
@@ -48,15 +52,30 @@ export class SourceService implements OnApplicationBootstrap {
     await SnapshotReport.update(id, { sourceCoverageStorageKey: key })
   }
 
-  async saveSourceIssues(projectId: number, hash: string, reportId: number, issues: FlameChartDiagnostic[]) {
+  async updateReportArtifactIds(id: number, artifactIds: number[]) {
+    await SnapshotReport.update(id, { sourceArtifactIds: artifactIds })
+  }
+
+  async saveSourceIssues(projectId: number, reportId: number, issues: FlameChartDiagnostic[]) {
+    const artifactCache: { [id: number]: Artifact } = {}
     const sourceIssues = []
 
     for (const issue of issues) {
+      const artifactId = parseInt(issue.bundle_id)
+      let artifact
+      if (artifactCache[artifactId]) {
+        artifact = artifactCache[artifactId]
+      } else {
+        artifact = await Artifact.findOneByOrFail({ id: artifactId })
+        artifactCache[artifactId] = artifact
+      }
+
       const iid = await this.internalIdService.generate(projectId, InternalIdUsage.SourceIssue)
       sourceIssues.push({
         projectId,
         iid,
-        hash,
+        hash: artifact.hash,
+        artifactId: artifact.id,
         snapshotReportId: reportId,
         frameKey: String(issue.frame.key),
         code: issue.code,
@@ -67,66 +86,97 @@ export class SourceService implements OnApplicationBootstrap {
     await SourceIssue.insert(sourceIssues)
   }
 
-  async startSourceIssueAnalyze(snapshotOrId: number | Snapshot) {
-    const snapshot = typeof snapshotOrId === 'number' ? await Snapshot.findOneBy({ id: snapshotOrId }) : snapshotOrId
-    if (snapshot?.hash) {
-      this.logger.verbose('Emit source code analyse', { snapshotId: snapshot.id })
-      await this.event.emitAsync('job.create', {
-        type: JobType.SourceAnalyze,
-        payload: {
-          entityId: snapshot.id,
-          projectId: snapshot.projectId,
-        },
-      })
-    }
+  async startSourceIssueAnalyze(snapshotReportId: number) {
+    const snapshotReport = await SnapshotReport.findOneByOrFail({ id: snapshotReportId })
+
+    this.logger.verbose('Emit source code analyse', { snapshotReportId: snapshotReport.id })
+    await this.event.emitAsync('job.create', {
+      type: JobType.SourceAnalyze,
+      payload: {
+        entityId: snapshotReport.id,
+        projectId: snapshotReport.projectId,
+      },
+    })
   }
 
-  async getSourceJobPayload(snapshotId: number): Promise<SourceAnalyzeJob | null> {
-    const snapshot = await Snapshot.findOneBy({ id: snapshotId })
-    if (!snapshot?.hash) {
+  async getSourceJobPayload(snapshotReportId: number): Promise<SourceAnalyzeJob | null> {
+    const snapshotReport = await SnapshotReport.findOneByOrFail({ id: snapshotReportId })
+    const snapshot = await Snapshot.findOneByOrFail({ id: snapshotReport.snapshotId })
+
+    if (
+      !(
+        snapshotReport.traceEventsStorageKey &&
+        snapshotReport.jsCoverageStorageKey &&
+        snapshotReport.scriptHashStorageKey
+      )
+    ) {
       return null
     }
 
-    const artifacts = await Artifact.find({
-      where: {
-        projectId: snapshot.projectId,
-        hash: snapshot.hash,
-      },
-      order: {
-        createdAt: 'DESC',
-      },
-    }).then((res) => uniqBy(res, 'name'))
+    const settings = await this.settingService.loader.load(snapshotReport.projectId)
+
+    const artifacts = []
+    const scripts = []
+
+    if (settings.autoDetectVersion) {
+      const scriptHash = JSON.parse(
+        (await this.storage.get(snapshotReport.scriptHashStorageKey)).toString('utf-8'),
+      ) as ScriptHashSchema
+
+      const scriptsWithArtifact = await this.sourceMapService.analyze(snapshotReport.projectId, scriptHash)
+
+      const artifactIds = uniq(scriptsWithArtifact.map((s) => s.artifact?.id).filter((id) => !!id))
+
+      artifacts.push(
+        ...(artifactIds.length > 0
+          ? await Artifact.createQueryBuilder()
+              .where('id in (:...artifactIds)', {
+                artifactIds: uniq(scriptsWithArtifact.map((s) => s.artifact?.id).filter((id) => !!id)),
+              })
+              .select(['build_key as buildKey', 'id'])
+              .getRawMany<{ id: number; buildKey: string }>()
+          : []),
+      )
+
+      scripts.push(...scriptsWithArtifact)
+    }
+
+    if (snapshot.hash) {
+      artifacts.push(
+        ...(await Artifact.find({
+          where: {
+            projectId: snapshot.projectId,
+            hash: snapshot.hash,
+          },
+          order: {
+            createdAt: 'DESC',
+          },
+        }).then((res) => uniqBy(res, 'name'))),
+      )
+    }
 
     if (!artifacts.length) {
       return null
     }
 
-    const reports = await this.reportService.getNonCompetitorReports(snapshot.projectId, snapshot.id).then((reports) =>
-      Promise.all(
-        reports
-          .filter((report) => report.status === SnapshotStatus.Completed && report.traceEventsStorageKey)
-          .map(async (report) => {
-            const page = await Page.findOneByOrFail({ id: report.pageId })
-            return {
-              id: report.id,
-              traceEventsStorageKey: report.traceEventsStorageKey!,
-              jsCoverageStorageKey: report.jsCoverageStorageKey!,
-              pageUrl: page.url,
-            }
-          }),
-      ),
-    )
+    const artifactBuildKeys = Object.fromEntries(artifacts.map((a) => [a.id, a.buildKey]))
 
-    if (!reports.length) {
-      return null
-    }
+    const page = await Page.findOneByOrFail({ id: snapshotReport.pageId })
 
     return {
-      snapshotId,
-      projectId: snapshot.projectId,
-      hash: snapshot.hash,
-      artifacts: artifacts.map((artifact) => artifact.buildKey),
-      snapshotReports: reports,
+      projectId: snapshotReport.projectId,
+      reportId: snapshotReport.id,
+      artifactBuildKeys,
+      snapshotReport: {
+        jsCoverageStorageKey: snapshotReport.jsCoverageStorageKey,
+        traceEventsStorageKey: snapshotReport.traceEventsStorageKey,
+        pageUrl: page.url,
+        scripts: scripts.map(({ script, artifact }) => ({
+          url: script.url,
+          hash: script.hash,
+          artifact,
+        })),
+      },
     }
   }
 

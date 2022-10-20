@@ -17,8 +17,18 @@ limitations under the License.
 import { BadRequestException } from '@nestjs/common'
 import { Resolver, Args, Int, ResolveField, Parent } from '@nestjs/graphql'
 import { isNil, omitBy } from 'lodash'
+import { In } from 'typeorm'
 
-import { Environment, Page, Profile, Project, Snapshot, SnapshotReport, SourceIssue } from '@perfsee/platform-server/db'
+import {
+  Artifact,
+  Environment,
+  Page,
+  Profile,
+  Project,
+  Snapshot,
+  SnapshotReport,
+  SourceIssue,
+} from '@perfsee/platform-server/db'
 import { transformInputType } from '@perfsee/platform-server/graphql'
 
 import { EnvironmentService } from '../../environment/service'
@@ -75,6 +85,11 @@ export class ReportResolver {
   @ResolveField(() => [SourceIssue], { name: 'issues', description: 'found performance issues' })
   issuesBySnapshotReportId(@Parent() report: SnapshotReport) {
     return this.service.getIssuesBySnapshotReportId(report.id)
+  }
+
+  @ResolveField(() => [Artifact], { name: 'sourceArtifacts', description: 'source artifacts', nullable: true })
+  sourceArtifacts(@Parent() report: SnapshotReport) {
+    return Artifact.findBy({ id: In(report.sourceArtifactIds ?? []) })
   }
 }
 

@@ -33,6 +33,7 @@ type PartialSnapshotReport = {
   screencastStorageKey?: string
   jsCoverageStorageKey?: string
   traceEventsStorageKey?: string
+  scriptHashStorageKey?: string
   performanceScore?: number | null
   metrics?: Record<MetricKeyType, number | null>
 }
@@ -98,6 +99,7 @@ export type BundleJobPassedUpdate = {
   duration: number
   score: number
   totalSize: Size
+  scripts?: { hash: string; filePath: string }[]
 }
 
 export type BundleJobUpdate = BundleJobRunningUpdate | BundleJobFailedUpdate | BundleJobPassedUpdate
@@ -115,24 +117,31 @@ export type E2EJobResult = {
 
 export interface SourceAnalyzeJob {
   projectId: number
-  snapshotId: number
-  hash: string
-  artifacts: string[]
-  snapshotReports: {
-    id: number
+  reportId: number
+  artifactBuildKeys: Record<string, string>
+  snapshotReport: {
+    pageUrl: string
     traceEventsStorageKey: string
     jsCoverageStorageKey: string
-    pageUrl: string
-  }[]
+    scripts: {
+      url: string
+      hash: string
+      artifact?:
+        | {
+            id: number
+            name: string
+            filePath: string
+          }
+        | undefined
+    }[]
+  }
 }
 
 export type SourceAnalyzeJobResult = {
   projectId: number
-  hash: string
-  result: Array<{
-    reportId: number
-    diagnostics: FlameChartDiagnostic[]
-    flameChartStorageKey: string
-    sourceCoverageStorageKey?: string
-  }>
+  reportId: number
+  artifactIds: number[]
+  diagnostics: FlameChartDiagnostic[]
+  flameChartStorageKey: string
+  sourceCoverageStorageKey?: string
 }

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { createHash } from 'crypto'
 import { rm } from 'fs/promises'
 import { join, parse } from 'path'
 
@@ -29,6 +30,7 @@ import {
   StatsParser,
   extractBundleFromStream,
   readStatsFile,
+  AssetTypeEnum,
 } from '@perfsee/bundle-analyzer'
 import { JobWorker } from '@perfsee/job-runner-shared'
 import {
@@ -71,7 +73,7 @@ export class BundleWorker extends JobWorker<BundleJobPayload> {
     // parse bundle
     const stats = readStatsFile(this.statsFilePath)
     const parser = StatsParser.FromStats(stats, parse(this.statsFilePath).dir, this.logger)
-    const { report, moduleTree } = await parser.parse()
+    const { report, moduleTree, assets } = await parser.parse()
 
     const bundleReportName = `bundle-results/${uuid()}.json`
     const bundleReportKey = await this.client.uploadArtifact(bundleReportName, Buffer.from(JSON.stringify(report)))
@@ -103,6 +105,18 @@ export class BundleWorker extends JobWorker<BundleJobPayload> {
     this.logger.info('Generating bundle audit aggregated result')
     const entryPoints = this.generateEntryPoints(report, baselineResult)
 
+    this.logger.info('Uploading Sourcemaps')
+    const scripts = []
+    for (const asset of assets) {
+      if (asset.type === AssetTypeEnum.Js && asset.sourcemap && asset.content) {
+        const scriptHash = createHash('sha256').update(asset.content).digest('base64')
+        scripts.push({
+          hash: scriptHash,
+          filePath: asset.realName,
+        })
+      }
+    }
+
     const message: BundleJobUpdate = {
       artifactId: this.payload.artifactId,
       status: BundleJobStatus.Passed,
@@ -112,6 +126,7 @@ export class BundleWorker extends JobWorker<BundleJobPayload> {
       entryPoints,
       duration: this.timeSpent,
       totalSize: this.calculateTotalSize(report),
+      scripts,
     }
     this.updateJob({
       type: JobType.BundleAnalyze,

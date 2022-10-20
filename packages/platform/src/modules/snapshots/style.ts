@@ -63,3 +63,23 @@ export const LighthouseBrand = styled(Stack)(({ theme }) => ({
   color: theme.text.colorSecondary,
   paddingTop: '12px',
 }))
+
+export const ArtifactLabel = styled.span<{ name: string }>(({ name, theme }) => {
+  return {
+    display: 'inline-block',
+    paddingRight: '5px',
+    color: theme.text.color,
+    border: `1px solid ${theme.border.color}`,
+    fontSize: '13px',
+    fontWeight: 400,
+    lineHeight: 1.5,
+    marginRight: '8px',
+    borderRadius: '5px',
+    ':before': {
+      padding: '0 5px',
+      marginRight: '5px',
+      borderRight: `1px solid ${theme.border.color}`,
+      content: `"${name}"`,
+    },
+  }
+})

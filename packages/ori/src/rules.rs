@@ -43,10 +43,11 @@ pub fn get_all_rules() -> Vec<Box<dyn Rule>> {
   ]
 }
 
-#[derive(Serialize, Debug, Default)]
+#[derive(Serialize, Debug)]
 pub struct Diagnostic {
   pub code: String,
   pub frame: Frame,
+  pub bundle_id: String,
   pub info: JsonValue,
 }
 
@@ -57,11 +58,14 @@ pub struct Context {
 
 impl Context {
   pub fn add_diagnostic(&mut self, code: &str, frame: &Frame, info: JsonValue) {
-    self.diagnostics.push(Diagnostic {
-      code: code.to_string(),
-      frame: frame.clone(),
-      info,
-    })
+    if let Some(ref bundle_id) = frame.bundle_id {
+      self.diagnostics.push(Diagnostic {
+        code: code.to_string(),
+        frame: frame.clone(),
+        bundle_id: bundle_id.clone(),
+        info,
+      })
+    }
   }
 }
 

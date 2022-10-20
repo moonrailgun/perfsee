@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { createHash } from 'crypto'
 import { mkdir, readFile, rm, writeFile } from 'fs/promises'
 import { join, dirname } from 'path'
 
@@ -26,6 +27,7 @@ import { JobWorker } from '@perfsee/job-runner-shared'
 import { LabJobPayload } from '@perfsee/server-common'
 import {
   CookieType,
+  LHStoredSchema,
   LighthouseScoreMetric,
   LocalStorageType,
   MetricKeyType,
@@ -82,6 +84,7 @@ export abstract class LighthouseJobWorker extends JobWorker<LabJobPayload> {
       }
     }
 
+    const scriptHash = this.getScriptHash(artifacts)
     const userTimings = this.getUserTimings(artifacts)
     const { requests, requestsBaseTimestamp } = this.getRequests(lhr)
     const metrics = this.getMetrics(lhr)
@@ -95,9 +98,11 @@ export abstract class LighthouseJobWorker extends JobWorker<LabJobPayload> {
 
     // artifacts
     const lighthouseFile = `snapshots/${uuid()}.json`
+    const scriptHashFile = `script-hash/${uuid()}.json`
     const jsCoverageFile = `js-coverage/${uuid()}.json`
     let lighthouseStorageKey
     let jsCoverageStorageKey
+    let scriptHashStorageKey
 
     // delete useless lighthouse data
     // @ts-expect-error
@@ -121,11 +126,10 @@ export abstract class LighthouseJobWorker extends JobWorker<LabJobPayload> {
             traceData,
             artifactsResult: requests,
             artifactsResultBaseTimestamp: requestsBaseTimestamp,
-            timings,
             timelines,
             metricScores,
             userTimings,
-          }),
+          } as LHStoredSchema),
         ),
       )
     } catch (e) {
@@ -146,6 +150,16 @@ export abstract class LighthouseJobWorker extends JobWorker<LabJobPayload> {
       }
     }
 
+    try {
+      scriptHashStorageKey = await this.client.uploadArtifact(scriptHashFile, Buffer.from(JSON.stringify(scriptHash)))
+    } catch (e) {
+      this.logger.error('Failed to upload scripts hash', { error: e })
+      return {
+        failedReason: 'Upload scripts hash timeout',
+        screencastStorageKey,
+      }
+    }
+
     const traceEventsStorageKey = await this.uploadTraceEvents(artifacts)
 
     return {
@@ -153,6 +167,7 @@ export abstract class LighthouseJobWorker extends JobWorker<LabJobPayload> {
       screencastStorageKey,
       jsCoverageStorageKey,
       traceEventsStorageKey,
+      scriptHashStorageKey,
       metrics,
     }
   }
@@ -387,6 +402,26 @@ export abstract class LighthouseJobWorker extends JobWorker<LabJobPayload> {
     )
 
     return Object.values(userTimings)
+  }
+
+  private getScriptHash(artifacts: LH.Artifacts) {
+    this.logger.info('Calculate scripts hash...')
+
+    const scripts = artifacts.ScriptElements
+
+    const results = []
+
+    for (const script of scripts) {
+      if (script.src && script.content) {
+        const hash = createHash('sha256').update(script.content).digest('base64')
+        results.push({
+          url: script.src,
+          hash,
+        })
+      }
+    }
+
+    return results
   }
 
   private computeMainThreadTask(lhResult: LH.Result, artifacts: LH.Artifacts) {

@@ -31,6 +31,7 @@ import { FlameChartDiagnosticInfo } from '@perfsee/shared'
 
 import type { Project } from './project.entity'
 import type { SnapshotReport } from './snapshot-report.entity'
+import { Artifact } from './artifact.entity'
 
 @Entity()
 @ObjectType({ description: 'source code performance issue found' })
@@ -54,6 +55,14 @@ export class SourceIssue extends BaseEntity {
   @Column()
   @Index()
   hash!: string
+
+  @Field({ description: 'git commit hash' })
+  @Column()
+  @RelationId('artifact')
+  artifactId!: number
+
+  @ManyToOne('Artifact', 'sourceIssues')
+  artifact!: Artifact
 
   @Field(() => Int, { description: 'source snapshot report id' })
   @Column()

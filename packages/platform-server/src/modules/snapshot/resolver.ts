@@ -172,7 +172,11 @@ export class SnapshotResolver {
   ) {
     const projectRawId = await this.projectService.resolveRawProjectIdBySlug(projectId)
     const snapshot = await this.service.setSnapshotHash(projectRawId, iid, hash)
-    await this.sourceService.startSourceIssueAnalyze(snapshot)
+    const reports = await this.reportService.getReportsBySnapshotId(snapshot.id)
+
+    for (const report of reports) {
+      await this.sourceService.startSourceIssueAnalyze(report.id)
+    }
 
     return true
   }

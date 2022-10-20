@@ -414,6 +414,9 @@ type SnapshotReport {
 
   """found performance issues"""
   issues: [SourceIssue!]!
+
+  """source artifacts"""
+  sourceArtifacts: [Artifact!]
 }
 
 """
@@ -568,6 +571,11 @@ type Setting {
   """branches where message should be sent if"""
   bundleMessageBranches: [String!]!
 
+  """
+  Whether to enable the experimental feature of automatic source association
+  """
+  autoDetectVersion: Boolean!
+
   """what kind of lab message would be sent"""
   labMessageSource: LabMessageSource!
 
@@ -647,6 +655,9 @@ type SourceIssue {
 
   """git commit hash"""
   hash: String!
+
+  """git commit hash"""
+  artifactId: Int!
 
   """source snapshot report id"""
   snapshotReportId: Int!
@@ -1205,6 +1216,11 @@ input UpdateSettingInput {
 
   """branches where message should be sent if"""
   bundleMessageBranches: [String!]
+
+  """
+  Whether to enable the experimental feature of automatic source association
+  """
+  autoDetectVersion: Boolean
 
   """what kind of lab message would be sent"""
   labMessageSource: LabMessageSource

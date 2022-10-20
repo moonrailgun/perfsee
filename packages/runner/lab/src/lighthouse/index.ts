@@ -41,6 +41,7 @@ export class LabJobWorker extends LighthouseJobWorker {
       screencastStorageKey,
       jsCoverageStorageKey,
       traceEventsStorageKey,
+      scriptHashStorageKey,
       metrics,
       failedReason,
     } = await this.audit()
@@ -52,7 +53,6 @@ export class LabJobWorker extends LighthouseJobWorker {
           snapshotReport: {
             id: payload.reportId,
             screencastStorageKey,
-            jsCoverageStorageKey,
             status: SnapshotStatus.Failed,
             failedReason: failedReason,
           },
@@ -68,6 +68,7 @@ export class LabJobWorker extends LighthouseJobWorker {
             screencastStorageKey,
             jsCoverageStorageKey,
             traceEventsStorageKey,
+            scriptHashStorageKey,
             status: SnapshotStatus.Completed,
             performanceScore: metrics![LighthouseScoreMetric.Performance],
             metrics,

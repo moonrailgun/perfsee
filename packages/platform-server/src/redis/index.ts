@@ -38,12 +38,23 @@ const RedlockProvider: FactoryProvider = {
   inject: [Redis],
 }
 
+class SourceMapRedis extends Redis {}
+
+const SourceMapRedisProvider: FactoryProvider = {
+  provide: SourceMapRedis,
+  useFactory: (config: Config) => {
+    return new Redis(config.redis)
+  },
+  inject: [Config],
+}
+
 @Global()
 @Module({
-  providers: [RedisProvider, RedlockProvider],
-  exports: [Redis, Redlock],
+  providers: [RedisProvider, RedlockProvider, SourceMapRedisProvider],
+  exports: [Redis, Redlock, SourceMapRedis],
 })
 export class RedisModule {}
 
 export { Redis }
+export { SourceMapRedis }
 export { Redlock }

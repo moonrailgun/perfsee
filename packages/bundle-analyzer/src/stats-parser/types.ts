@@ -45,6 +45,7 @@ export interface PackageMeta {
 export type Asset = AcquiredAsset & {
   modules: Module[]
   content?: string
+  realName: string
   intermediate?: boolean
   sourcemap?: boolean
 }

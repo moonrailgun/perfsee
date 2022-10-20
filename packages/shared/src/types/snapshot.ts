@@ -14,7 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { NetworkRequest, RequestTiming } from '@perfsee/flamechart/types'
+import { NetworkRequest as RequestSchema, RequestTiming } from '@perfsee/flamechart/types'
+import { Task } from '@perfsee/tracehouse'
+
+import { MetricScoreSchema, TimelineSchema, UserTimingSchema } from './lighthouse-score'
 
 export enum LifeCycle {
   dataReceived = 'Network.dataReceived',
@@ -118,4 +121,39 @@ export type ThrottleType = {
   cpuSlowdown: number
 }
 
-export { NetworkRequest as RequestSchema, RequestTiming as Timing }
+export type AuditsSchema = Record<string, LH.Audit.Result>
+
+export type TraceTimesWithoutFCP = Omit<LH.Artifacts.TraceTimes, 'firstContentfulPaint'> & {
+  firstContentfulPaint?: number
+}
+
+type LHTosUserFlowSchema = {
+  stepName: string
+  stepUrl: string
+  stepMode: LH.Result.GatherMode
+  lhrAudit: AuditsSchema
+  lhrCategories: Record<string, LH.Result.Category>
+  timings: TraceTimesWithoutFCP
+  timelines: TimelineSchema[]
+  metricScores: MetricScoreSchema[]
+}
+
+export type LHStoredSchema = {
+  lhrAudit: AuditsSchema
+  lhrCategories: Record<string, LH.Result.Category>
+  traceData: Task[]
+  artifactsResult: RequestSchema[]
+  artifactsResultBaseTimestamp?: number
+  timelines: TimelineSchema[]
+  metricScores: MetricScoreSchema[]
+  userFlow?: LHTosUserFlowSchema[]
+  userTimings?: UserTimingSchema[]
+  lighthouseVersion?: string
+}
+
+export type ScriptHashSchema = {
+  url: string
+  hash: string
+}[]
+
+export { RequestSchema, RequestTiming as Timing }

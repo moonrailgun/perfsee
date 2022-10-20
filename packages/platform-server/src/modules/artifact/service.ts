@@ -27,6 +27,8 @@ import { BundleJobPayload, BundleJobUpdate, BundleJobStatus, JobType } from '@pe
 
 import { CheckSuiteService } from '../checksuite/service'
 import { NotificationService } from '../notification/service'
+import { SettingService } from '../setting/service'
+import { SourceMapService } from '../sourcemap/service'
 
 @Injectable()
 export class ArtifactService implements OnApplicationBootstrap {
@@ -42,6 +44,8 @@ export class ArtifactService implements OnApplicationBootstrap {
     private readonly logger: Logger,
     private readonly metric: Metric,
     private readonly notification: NotificationService,
+    private readonly sourceMap: SourceMapService,
+    private readonly setting: SettingService,
   ) {}
 
   onApplicationBootstrap() {
@@ -213,6 +217,17 @@ export class ArtifactService implements OnApplicationBootstrap {
         )
       }
     })
+
+    if (update.status === BundleJobStatus.Passed && update.scripts) {
+      const settings = await this.setting.loader.load(artifact.projectId)
+      if (settings.autoDetectVersion) {
+        await this.sourceMap.track(artifact.projectId, {
+          artifactId: artifact.id,
+          artifactName: artifact.name,
+          scripts: update.scripts,
+        })
+      }
+    }
 
     this.tapMetrics(artifact)
     await this.updateCheck(artifact, update)

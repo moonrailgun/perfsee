@@ -14,7 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ClockCircleOutlined, PlusOutlined, SelectOutlined } from '@ant-design/icons'
+import {
+  BranchesOutlined,
+  ClockCircleOutlined,
+  NodeIndexOutlined,
+  PlusOutlined,
+  SelectOutlined,
+} from '@ant-design/icons'
 import { Stack, TooltipHost } from '@fluentui/react'
 import { useModule, useModuleState } from '@sigi/react'
 import dayjs from 'dayjs'
@@ -29,7 +35,7 @@ import { LabListModule, ReportsPayload } from '../../lab/list/module'
 import { CompareModule, useProject } from '../../shared'
 import { PerformanceTabType, SnapshotReportSchema } from '../snapshot-type'
 import { SnapshotModule } from '../snapshot.module'
-import { SnapshotKey, SnapshotHeaderTime, OperationButton } from '../style'
+import { SnapshotKey, SnapshotHeaderTime, OperationButton, ArtifactLabel } from '../style'
 
 type Props = {
   report: SnapshotReportSchema
@@ -126,15 +132,32 @@ export const SnapshotHeader = memo(function SnapshotHeader(props: Props) {
 
   return (
     <div style={{ width: '100%' }}>
-      <Stack styles={{ root: { marginBottom: '16px' } }} horizontal verticalAlign="center">
-        <SnapshotKey>{snapshotTitle}</SnapshotKey>
-        <SnapshotHeaderTime>
-          <ClockCircleOutlined />
-          {dayjs(report.createdAt).format('MMM D, YYYY h:mm A')}
-          {detail?.lighthouseVersion ? ` · Lighthouse v${detail.lighthouseVersion}` : undefined}
-        </SnapshotHeaderTime>
+      <Stack
+        styles={{ root: { marginBottom: '16px' } }}
+        horizontal
+        verticalAlign="center"
+        horizontalAlign="space-between"
+      >
+        <div>
+          <SnapshotKey>{snapshotTitle}</SnapshotKey>
+          <SnapshotHeaderTime>
+            <ClockCircleOutlined />
+            {dayjs(report.createdAt).format('MMM D, YYYY h:mm A')}
+            {detail?.lighthouseVersion ? ` · Lighthouse v${detail.lighthouseVersion}` : undefined}
+          </SnapshotHeaderTime>
+        </div>
+        <div>
+          {report.sourceArtifacts.map((a, i) => (
+            <ArtifactLabel name={a.name} key={i}>
+              <BranchesOutlined />
+              <span>{a.branch}</span>&nbsp;
+              <NodeIndexOutlined />
+              <span>{a.hash.substring(0, 8)}</span>
+            </ArtifactLabel>
+          ))}
+        </div>
       </Stack>
-      <Stack horizontal horizontalAlign="space-between">
+      <Stack styles={{ root: { marginBottom: '16px' } }} horizontal horizontalAlign="space-between">
         <Stack horizontal tokens={{ childrenGap: 12 }}>
           <Select
             onClick={fetchReports}
